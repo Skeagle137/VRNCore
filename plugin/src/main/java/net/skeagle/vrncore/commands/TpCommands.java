@@ -12,6 +12,7 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import revxrsal.commands.annotation.Default;
 import revxrsal.commands.bukkit.actor.BukkitCommandActor;
 
 import java.util.HashMap;
@@ -69,7 +70,7 @@ public class TpCommands {
     }
 
     @VRNCommand(cmd = "back", desc = "Teleports back to a player's previous location.")
-    public void onBack(BukkitCommandActor actor, Player target) {
+    public void onBack(BukkitCommandActor actor, @Default("@s") Player target) {
         Player player = actor.requirePlayer();
         final Location backLoc = backCache.getBackLoc(target.getUniqueId());
         if (backLoc == null) {
