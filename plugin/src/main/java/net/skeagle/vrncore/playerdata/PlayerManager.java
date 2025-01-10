@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import net.skeagle.vrncore.VRNCore;
 import net.skeagle.vrncore.trail.TrailType;
 import net.skeagle.vrncore.utils.VRNUtil;
+import net.skeagle.vrnlib.misc.Task;
 import net.skeagle.vrnlib.misc.UserCache;
 import net.skeagle.vrnlib.sql.SQLHelper;
 import org.bukkit.Bukkit;
@@ -72,7 +73,7 @@ public class PlayerManager {
         });
     }*/
 
-    public CompletableFuture<OfflinePlayer> getOfflinePlayer(final String name) {
+    public CompletableFuture<OfflinePlayer> getOfflinePlayer(String name) {
         final Player player = Bukkit.getPlayer(name);
         if (player != null)
             return CompletableFuture.completedFuture(player);
@@ -82,7 +83,6 @@ public class PlayerManager {
         return this.checkHasPlayed(name);
     }
 
-    @SuppressWarnings("deprecation")
     private CompletableFuture<OfflinePlayer> checkHasPlayed(String name) {
         return CompletableFuture.supplyAsync(() -> Bukkit.getOfflinePlayer(name)).handleAsync((res, ex) -> {
             if (res != null && res.hasPlayedBefore()) {

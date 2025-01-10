@@ -1,8 +1,10 @@
 package net.skeagle.vrncore;
 
-import net.skeagle.vrncommands.BukkitUtils;
+import net.skeagle.vrncore.configurable.Settings;
 import net.skeagle.vrncore.configurable.rewards.Reward;
 import net.skeagle.vrncore.utils.AFKManager;
+import net.skeagle.vrnlib.messages.Messages;
+import net.skeagle.vrnlib.misc.FormatUtils;
 import net.skeagle.vrnlib.misc.Task;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -10,9 +12,9 @@ import org.bukkit.entity.Player;
 
 import static net.skeagle.vrnlib.misc.TimeUtil.timeToMessage;
 
-public class Tasks {
+class Tasks {
 
-    public Tasks(VRNCore plugin) {
+    static void init(VRNCore plugin) {
         Task.asyncRepeating(() -> plugin.getPlayerManager().save(), 20L, 20L * (Settings.autoSaveInterval * 60L));
 
         Task.asyncRepeating(() -> {
@@ -20,7 +22,7 @@ public class Tasks {
                 final AFKManager manager = AFKManager.getAfkManager(pl);
                 plugin.getPlayerManager().getData(pl.getUniqueId()).thenAccept(data -> {
                     long time = data.getTimePlayed();
-                    if (!this.updateAfk(pl) || !manager.isAfk()) {
+                    if (!updateAfk(pl) || !manager.isAfk()) {
                         time++;
                         data.setTimePlayed(time);
                         final Reward reward = plugin.getRewardManager().getRewardByTime(time);
@@ -34,7 +36,7 @@ public class Tasks {
                             manager.setAfk(true);
                         }
                     } else if (manager.getTimeAfk() >= Settings.kickTime && !pl.hasPermission("vrn.afkexempt")) {
-                        Task.syncDelayed(() -> pl.kickPlayer(BukkitUtils.color("&cYou have been kicked for idling more than " + timeToMessage(Settings.kickTime))));
+                        Task.syncDelayed(() -> pl.kickPlayer(Messages.msg("afkKickMsg", timeToMessage(Settings.kickTime))));
                         manager.remove(pl);
                     }
                 });
@@ -42,8 +44,8 @@ public class Tasks {
         }, 0, 20);
     }
 
-    private boolean updateAfk(final Player player) {
-        final AFKManager manager = AFKManager.getAfkManager(player);
+    private static boolean updateAfk(final Player player) {
+        AFKManager manager = AFKManager.getAfkManager(player);
         Location old = manager.getSavedLocation();
         Location current = player.getLocation();
         manager.setSavedLocation(current);

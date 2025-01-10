@@ -1,11 +1,12 @@
 package net.skeagle.vrncore.event;
 
-import net.skeagle.vrncommands.BukkitMessages;
-import net.skeagle.vrncommands.BukkitUtils;
 import net.skeagle.vrncore.VRNCore;
 import net.skeagle.vrncore.hook.HookManager;
+import net.skeagle.vrncore.utils.AFKManager;
 import net.skeagle.vrncore.utils.VRNUtil;
-import net.skeagle.vrncore.Settings;
+import net.skeagle.vrncore.configurable.Settings;
+import net.skeagle.vrnlib.messages.Messages;
+import net.skeagle.vrnlib.misc.FormatUtils;
 import net.skeagle.vrnlib.misc.Task;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -41,22 +42,24 @@ public class PlayerListener implements Listener {
     public void onPlayerJoin(final PlayerJoinEvent e) {
         plugin.getPlayerManager().getData(e.getPlayer().getUniqueId()).thenAccept(data -> {
             data.updateName(e.getPlayer());
-            if (!e.getPlayer().hasPlayedBefore() && Settings.joinLeaveEnabled) {
-                e.setJoinMessage(BukkitMessages.msg("welcomeMsg").replaceAll("%player%", data.getName()));
+            if (!e.getPlayer().hasPlayedBefore() && Settings.joinLeaveEnabled && Settings.welcomeMessageEnabled) {
+                e.setJoinMessage(Messages.msg("welcomeMsg", data.getName()));
             } else if (Settings.joinLeaveEnabled) {
-                e.setJoinMessage(BukkitMessages.msg("joinMsg").replaceAll("%player%", data.getName()));
-                Task.syncDelayed(() -> VRNUtil.say(e.getPlayer(), BukkitMessages.msg("returnMsg").replaceAll("%player%", data.getName())), 2);
+                e.setJoinMessage(Messages.msg("joinMsg", data.getName()));
+                if (Settings.returnMessageEnabled)
+                    Task.syncDelayed(() -> VRNUtil.say(e.getPlayer(), Messages.msg("returnMsg", data.getName())), 2);
             }
-            e.getPlayer().setPlayerListHeaderFooter(BukkitMessages.msg("tabListHeader").replaceAll("%player%", data.getName()),
-                    BukkitMessages.msg("tabListFooter").replaceAll("%player%", data.getName()));
+            e.getPlayer().setPlayerListHeaderFooter(Messages.msg("tabListHeader", data.getName()),
+                    Messages.msg("tabListFooter", data.getName()));
         });
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerQuit(final PlayerQuitEvent e) {
+        Player player = e.getPlayer();
         if (Settings.joinLeaveEnabled) {
-            plugin.getPlayerManager().getData(e.getPlayer().getUniqueId()).thenAccept(data ->
-                    e.setQuitMessage(BukkitMessages.msg("leaveMsg").replaceAll("%player%", data.getName())));
+            plugin.getPlayerManager().getData(player.getUniqueId()).thenAccept(data ->
+                    e.setQuitMessage(Messages.msg("leaveMsg", data.getName())));
         }
     }
 
@@ -69,14 +72,14 @@ public class PlayerListener implements Listener {
             VRNUtil.say(e.getPlayer(), "&cYou do not have permission to use the chat.");
         }
         if (e.getPlayer().hasPermission("vrn.chat.color") || !Settings.colorPermission)
-            e.setMessage(BukkitUtils.color(e.getMessage()));
+            e.setMessage(FormatUtils.color(e.getMessage()));
         if (!HookManager.isVaultLoaded())
             return;
         plugin.getPlayerManager().getData(e.getPlayer().getUniqueId()).thenAccept(data -> {
             String msg = HookManager.format(data);
             msg = msg.replaceAll("%", "%%");
             msg = msg.replace("%%message", "%2$s");
-            e.setFormat(BukkitUtils.color(msg));
+            e.setFormat(FormatUtils.color(msg));
         });
     }
 

@@ -1,6 +1,5 @@
 package net.skeagle.vrncore.homes;
 
-import net.skeagle.vrncommands.ArgType;
 import net.skeagle.vrnlib.misc.EventListener;
 import net.skeagle.vrnlib.misc.LocationUtils;
 import net.skeagle.vrnlib.sql.SQLHelper;
@@ -9,6 +8,9 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.jetbrains.annotations.NotNull;
+import revxrsal.commands.autocomplete.AsyncSuggestionProvider;
+import revxrsal.commands.node.ExecutionContext;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -24,7 +26,7 @@ public class HomeManager {
         homesMap = new ConcurrentHashMap<>();
         this.db = db;
         new EventListener<>(PlayerJoinEvent.class, e ->
-                this.load(e.getPlayer()).thenApplyAsync(homes -> {
+                this.load(e.getPlayer().getUniqueId()).thenApplyAsync(homes -> {
                     if (homes != null)
                         this.homesMap.put(e.getPlayer().getUniqueId(), homes);
                     return null;
@@ -32,9 +34,9 @@ public class HomeManager {
         new EventListener<>(PlayerQuitEvent.class, e -> homesMap.remove(e.getPlayer().getUniqueId()));
     }
 
-    public CompletableFuture<Set<Home>> load(OfflinePlayer player) {
+    public CompletableFuture<Set<Home>> load(UUID uuid) {
         return CompletableFuture.supplyAsync(() -> {
-            SQLHelper.Results res = db.queryResults("SELECT * FROM homes WHERE owner = ?", player.getUniqueId());
+            SQLHelper.Results res = db.queryResults("SELECT * FROM homes WHERE owner = ?", uuid);
             Set<Home> set = new HashSet<>();
             if (res.isEmpty()) return set;
             res.forEach(home -> {
@@ -62,29 +64,25 @@ public class HomeManager {
         CompletableFuture.runAsync(() -> db.execute("DELETE FROM homes WHERE name = ? AND owner = ?", home.name(), home.owner()));
     }
 
-    public Home getHome(String name, Player player) {
-        return homesMap.get(player.getUniqueId()).stream().filter(h -> h.name().equalsIgnoreCase(name)).findFirst().orElse(null);
+    public Home getHome(String name, UUID uuid) {
+        return homesMap.get(uuid).stream().filter(h -> h.name().equalsIgnoreCase(name)).findFirst().orElse(null);
     }
 
     public CompletableFuture<Integer> getHomesCount(OfflinePlayer player) {
         if (homesMap.containsKey(player.getUniqueId())) {
             return CompletableFuture.completedFuture(homesMap.size());
         }
-        return this.load(player).thenApplyAsync(Set::size);
+        return this.load(player.getUniqueId()).thenApplyAsync(Set::size);
     }
 
     public List<String> getHomeNames(Player player) {
         return homesMap.get(player.getUniqueId()).stream().map(Home::name).collect(Collectors.toList());
     }
 
-    public CompletableFuture<Set<Home>> getHomes(OfflinePlayer player) {
-        if (homesMap.containsKey(player.getUniqueId())) {
-            return CompletableFuture.supplyAsync(() -> homesMap.get(player.getUniqueId()));
+    public CompletableFuture<Set<Home>> getHomes(UUID uuid) {
+        if (homesMap.containsKey(uuid)) {
+            return CompletableFuture.completedFuture(homesMap.get(uuid));
         }
-        return this.load(player);
-    }
-
-    public ArgType<Home> getArgType() {
-        return new ArgType<>("home", (s, c) -> getHome(c, s.getUser())).setTab((s, c) -> getHomeNames(s.getUser()));
+        return this.load(uuid);
     }
 }

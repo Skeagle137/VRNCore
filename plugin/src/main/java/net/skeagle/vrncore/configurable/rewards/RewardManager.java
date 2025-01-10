@@ -1,10 +1,9 @@
 package net.skeagle.vrncore.configurable.rewards;
 
-
-import net.skeagle.vrncommands.BukkitUtils;
 import net.skeagle.vrncore.hook.HookManager;
 import net.skeagle.vrncore.hook.SuperVanishHook;
 import net.skeagle.vrnlib.config.ConfigManager;
+import net.skeagle.vrnlib.misc.FormatUtils;
 import net.skeagle.vrnlib.misc.Task;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
@@ -14,7 +13,7 @@ import java.util.Map;
 import java.util.logging.Level;
 
 import static net.skeagle.vrncore.utils.VRNUtil.log;
-import static net.skeagle.vrncore.utils.VRNUtil.sayNoPrefix;
+import static net.skeagle.vrnlib.VRNLib.sayNoPrefix;
 
 public class RewardManager {
 
@@ -23,7 +22,7 @@ public class RewardManager {
 
     public RewardManager(Plugin plugin) {
         if (!HookManager.isLuckPermsLoaded()) {
-            log(Level.SEVERE, BukkitUtils.color("&cRewards require luckperms to be installed. Rewards will be disabled."));
+            log(Level.SEVERE, FormatUtils.color("&cRewards require luckperms to be installed. Rewards will be disabled."));
             return;
         }
         rewardConfig = ConfigManager.create(plugin, "rewards.yml").target(this.getClass()).saveDefaults().load();
@@ -48,11 +47,11 @@ public class RewardManager {
 
     public void run(final Reward reward, final Player player) {
         if (reward.message != null) {
-            sayNoPrefix(player, BukkitUtils.color(reward.replaceVars(player, reward.message)));
+            sayNoPrefix(player, FormatUtils.color(reward.replaceVars(player, reward.message)));
         }
         if (reward.title != null || reward.subtitle != null)
-            player.sendTitle(reward.title != null ? BukkitUtils.color(reward.replaceVars(player, reward.title)) :
-                    "", reward.subtitle != null ? BukkitUtils.color(reward.replaceVars(player, reward.subtitle)) : "", 5, 120, 40);
+            player.sendTitle(reward.title != null ? FormatUtils.color(reward.replaceVars(player, reward.title)) :
+                    "", reward.subtitle != null ? FormatUtils.color(reward.replaceVars(player, reward.subtitle)) : "", 5, 120, 40);
         if (reward.action != null && reward.group != null)
             reward.action.get().accept(player, reward.group);
         if (HookManager.isSuperVanishLoaded() && SuperVanishHook.isVanished(player)) {

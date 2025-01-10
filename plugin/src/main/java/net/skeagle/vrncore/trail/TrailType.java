@@ -1,6 +1,6 @@
 package net.skeagle.vrncore.trail;
 
-import net.skeagle.vrncommands.misc.FormatUtils;
+import net.skeagle.vrnlib.misc.FormatUtils;
 
 public enum TrailType {
     PLAYER,

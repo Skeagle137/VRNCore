@@ -1,6 +1,6 @@
 package net.skeagle.vrncore.GUIs;
 
-import net.skeagle.vrncommands.misc.FormatUtils;
+import net.skeagle.vrnlib.misc.FormatUtils;
 import net.skeagle.vrncore.configurable.GuiConfig;
 import net.skeagle.vrncore.utils.VRNUtil;
 import net.skeagle.vrnlib.inventorygui.InventoryGUI;
@@ -33,7 +33,7 @@ public class ExpTradeGUI {
                 if (checkInv(player, item.getType())) {
                     new ExpTradeAmount(player, name, item.getType());
                 } else {
-                    Task.syncDelayed(player::closeInventory);
+                    Task.syncDelayed(() -> player.closeInventory());
                     VRNUtil.say(player, "&cThat item is not in your inventory.");
                 }
             }), i);
@@ -98,7 +98,7 @@ public class ExpTradeGUI {
                 }
                 player.giveExp(worth * ((amount % 64) + (stacks * 64)));
                 VRNUtil.say(player, "You traded &ax" + amount + " " + name + " &7for &a" + FormatUtils.truncateDouble(gain) + " &7exp level(s).");
-                Task.syncDelayed(player::closeInventory);
+                Task.syncDelayed(() -> player.closeInventory());
             }), 6);
 
             this.open(player);

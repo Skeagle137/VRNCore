@@ -2,10 +2,6 @@ plugins {
     `java-library`
 }
 
-java {
-    toolchain.languageVersion.set(JavaLanguageVersion.of(17))
-}
-
 allprojects {
     apply(plugin = "java")
 
@@ -14,22 +10,24 @@ allprojects {
 
     repositories {
         mavenCentral()
+        maven("https://repo.papermc.io/repository/maven-public/")
         maven("https://oss.sonatype.org/content/repositories/snapshots")
         maven("https://jitpack.io")
         maven("https://repo.skeagle.net/snapshots")
-        maven("https://repo.codemc.io/repository/nms/")
-        maven("https://libraries.minecraft.net/")
         gradlePluginPortal()
-        mavenLocal()
     }
 
     dependencies {
-        compileOnly("org.spigotmc:spigot-api:1.20-R0.1-SNAPSHOT")
-        compileOnly("com.mojang:authlib:4.0.43")
+        compileOnly("net.skeagle:vrnlib:2.2.0")
+        compileOnly("com.mojang:authlib:6.0.54")
     }
 
     tasks.withType<JavaCompile> {
-        options.release.set(17)
+        options.release.set(21)
         options.encoding = "UTF-8"
+    }
+
+    java {
+        toolchain.languageVersion.set(JavaLanguageVersion.of(21))
     }
 }

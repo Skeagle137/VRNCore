@@ -1,38 +1,32 @@
 package net.skeagle.vrncore.commands;
 
-import net.skeagle.vrncommands.BukkitMessages;
-import net.skeagle.vrncommands.BukkitUtils;
-import net.skeagle.vrncommands.CommandHook;
 import net.skeagle.vrncore.VRNCore;
 import net.skeagle.vrncore.GUIs.ExpTradeGUI;
 import net.skeagle.vrncore.GUIs.TrailsGUI;
-import net.skeagle.vrncore.Settings;
-import net.skeagle.vrncore.configurable.GuiConfig;
 import net.skeagle.vrnlib.itemutils.ItemUtils;
+import net.skeagle.vrnlib.messages.Messages;
+import net.skeagle.vrnlib.misc.FormatUtils;
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.World;
-import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
+import revxrsal.commands.annotation.Default;
+import revxrsal.commands.bukkit.actor.BukkitCommandActor;
 
 import java.util.*;
 
-import static net.skeagle.vrncore.utils.VRNUtil.say;
-import static net.skeagle.vrncore.utils.VRNUtil.sayNoPrefix;
+import static net.skeagle.vrnlib.VRNLib.say;
+import static net.skeagle.vrnlib.VRNLib.sayNoPrefix;
 
-@SuppressWarnings("unused")
 public class MiscCommands {
 
     private final Map<UUID, UUID> lastReplies = new HashMap<>();
 
-    @CommandHook("message")
-    public void onMessage(final Player player, final Player target, String message) {
+    @VRNCommand(cmd = {"message", "msg"}, desc = "Sends a direct message to a player.")
+    public void onMessage(Player player, Player target, String message) {
         VRNCore.getPlayerData(player.getUniqueId()).thenAcceptAsync(playerData -> {
             VRNCore.getPlayerData(target.getUniqueId()).thenAccept(targetData -> {
-                String outgoing = BukkitMessages.msg("senderMsgPlayerPrefix").replaceAll("%target%", targetData.getName()) + message;
-                String incoming = BukkitMessages.msg("playerMsgSenderPrefix").replaceAll("%sender%", playerData.getName())  + message;
+                String outgoing = Messages.msg("senderMsgPlayerPrefix", targetData.getName()) + message;
+                String incoming = Messages.msg("playerMsgSenderPrefix", playerData.getName()) + message;
                 sayNoPrefix(player, outgoing);
                 sayNoPrefix(target, incoming);
                 lastReplies.put(player.getUniqueId(), target.getUniqueId());
@@ -41,81 +35,40 @@ public class MiscCommands {
         });
     }
 
-    @CommandHook("reply")
-    public void onReply(final Player player, String message) {
+    @VRNCommand(cmd = {"reply", "r"}, desc = "Sends a reply to the last player that messaged you.", perm = "message")
+    public void onReply(BukkitCommandActor actor, String message) {
+        Player player = actor.requirePlayer();
         if (lastReplies.get(player.getUniqueId()) == null) {
-            say(player, "&cYou have not messaged someone to be able to reply to them yet.");
+            actor.error("You have not messaged someone to be able to reply to them yet.");
             return;
         }
         onMessage(player, Bukkit.getPlayer(lastReplies.get(player.getUniqueId())), message);
     }
 
-    @CommandHook("craft")
-    public void onCraft(final Player player) {
+    @VRNCommand(cmd = "craft", desc = "Opens a crafting table interface.")
+    public void onCraft(Player player) {
         player.openWorkbench(null, true);
     }
 
-    @CommandHook("trails")
-    public void onTrails(final Player player, final Player target) {
+    @VRNCommand(cmd = {"trails", "trail"}, desc = "Opens a GUI for selecting and customizing arrow and player trails.")
+    public void onTrails(Player player, @Default("@s") Player target) {
         new TrailsGUI(player, target);
     }
 
-    @CommandHook("exptrade")
-    public void onExpTrade(final Player player) {
+    @VRNCommand(cmd = "exptrade", desc = "Opens a GUI for trading items for experience points.")
+    public void onExpTrade(Player player) {
         new ExpTradeGUI(player);
     }
 
-    @CommandHook("rename")
-    public void onRename(final Player player, final String name) {
+    @VRNCommand(cmd = "rename", desc = "Renames the currently held item in your main hand.")
+    public void onRename(BukkitCommandActor actor, String name) {
+        Player player = actor.requirePlayer();
         if (player.getInventory().getItemInMainHand().getType() == Material.AIR) {
-            say(player, "&cYou must have an item in your hand.");
+            say(player, "You must have an item in your main hand.");
             return;
         }
-        final ItemStack i = ItemUtils.rename(player.getInventory().getItemInMainHand(), BukkitUtils.color(name));
-        player.getInventory().setItemInMainHand(i);
-        say(player, "Item successfully renamed.");
-    }
-
-    @CommandHook("rtp")
-    public void onRtp(final Player player) {
-        say(player, "&aSearching for a destination.");
-        final Random r = new Random();
-        final int min = Settings.rtpMin;
-        final int max = Settings.rtpMax;
-        final int origin_x = Settings.rtpOriginX;
-        final int origin_z = Settings.rtpOriginZ;
-        final int x = genRandom(r, max, min);
-        final int z = genRandom(r, max, min);
-        final Location loc = new Location(player.getWorld(), origin_x + x + 0.5, 128, origin_z + z + 0.5, player.getLocation().getYaw(), player.getLocation().getPitch());
-
-        if (player.getWorld().getEnvironment() == World.Environment.NETHER)
-            loc.setY((player.getWorld().getHighestBlockYAt(loc) - 4));
-        for (int i = loc.getBlockY(); i > 10; --i) {
-            loc.setY(i);
-            final Location one_up = loc.clone().add(0, 1, 0);
-            final Location one_down = loc.clone().subtract(0, 1, 0);
-            final Location two_down = loc.clone().subtract(0, 2, 0);
-            if (loc.getBlock().getType().isAir() && one_up.getBlock().getType().isAir() && checkBlock(one_down.getBlock()) && checkBlock(two_down.getBlock())) {
-                player.teleport(loc);
-                say(player, "You have been teleported to &a" + loc.getX() + "&7, &a" + loc.getY() + "&7, &a" + loc.getZ() + "&7.");
-                return;
-            }
-        }
-        say(player, "&cCould not find a suitable location to teleport to.");
-    }
-
-    private int genRandom(final Random r, final int max, final int min) {
-        int i = r.nextInt(max - min + 1) + min;
-        if (Math.abs(i) < min) {
-            if (i < 0) i = -min;
-            if (i >= 0) i = min;
-        }
-        return i;
-    }
-
-    private boolean checkBlock(final Block b) {
-        return b.getType().isSolid() &&
-                b.getType() != Material.LAVA &&
-                !b.isLiquid() && !b.isPassable();
+        String formatted = FormatUtils.color(name);
+        player.getInventory().setItemInMainHand(ItemUtils.rename(player.getInventory().getItemInMainHand(), formatted));
+        actor.reply("Item renamed to " + formatted + "&7.");
     }
 }

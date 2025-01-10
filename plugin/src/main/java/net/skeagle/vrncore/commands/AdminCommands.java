@@ -1,11 +1,11 @@
 package net.skeagle.vrncore.commands;
 
-import net.skeagle.vrncommands.BukkitMessages;
-import net.skeagle.vrncommands.BukkitUtils;
-import net.skeagle.vrncommands.CommandHook;
 import net.skeagle.vrncore.VRNCore;
 import net.skeagle.vrncore.GUIs.GivePlusGUI;
 import net.skeagle.vrncore.playerdata.PlayerStates;
+import net.skeagle.vrnlib.messages.Messages;
+import net.skeagle.vrnlib.misc.FormatUtils;
+import net.skeagle.vrnlib.misc.Task;
 import net.skeagle.vrnlib.misc.TimeUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
@@ -15,221 +15,215 @@ import org.bukkit.block.Block;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.Damageable;
+import org.bukkit.inventory.meta.ItemMeta;
+import revxrsal.commands.annotation.*;
+import revxrsal.commands.bukkit.actor.BukkitCommandActor;
+import revxrsal.commands.bukkit.parameters.EntitySelector;
 
 import java.util.concurrent.CompletableFuture;
 
-import static net.skeagle.vrncore.utils.VRNUtil.*;
+import static net.skeagle.vrnlib.VRNLib.say;
 import static net.skeagle.vrnlib.misc.TimeUtil.timeToMessage;
 
-@SuppressWarnings("unused")
 public class AdminCommands {
 
-    @CommandHook("broadcast")
-    public void onBroadcast(final CommandSender sender, final String message) {
-        Bukkit.broadcastMessage(BukkitUtils.color(BukkitMessages.msg("broadcastPrefix") + " " + message));
+    @VRNCommand(cmd = {"broadcast", "bc"}, desc = "Broadcasts a message to the entire server.")
+    public void onBroadcast(CommandSender sender, String message) {
+        Bukkit.broadcastMessage(FormatUtils.color(Messages.msg("broadcastPrefix") + message));
     }
 
-    @CommandHook("echest")
-    public void onEchest(final Player player, final Player target) {
+    @VRNCommand(cmd = "echest", desc = "Opens a player's ender chest.")
+    public void onEchest(BukkitCommandActor actor, @Default("@s") Player target) {
+        Player player = actor.requirePlayer();
         player.openInventory(target.getEnderChest());
-        say(player, target != player ? "Now showing &a" + target.getName() + "&7's ender chest." : "Now showing your ender chest.");
+        actor.reply(target != player ? "Now showing &a" + target.getName() + "&7's ender chest." : "Now showing your ender chest.");
     }
 
-    @CommandHook("giveplus")
-    public void onGivePlus(final Player player) {
-        new GivePlusGUI(player);
+    @VRNCommand(cmd = {"giveplus", "givep"}, desc = "Opens a gui for a quick way to obtain creative only items.")
+    public void onGivePlus(BukkitCommandActor actor) {
+        Player player = actor.requirePlayer();
+        new GivePlusGUI(actor, player);
     }
 
-    @CommandHook("smite")
-    public void onSmite(final CommandSender sender, final boolean all, final Player target) {
-        if (all) {
-            for (final Player pl : Bukkit.getOnlinePlayers())
-                pl.getWorld().strikeLightning(pl.getLocation());
-            say(sender, "Smited all players.");
-            return;
+    @VRNCommand(cmd = "smite", desc = "Strikes a selection of players by summoning lightning at their location.")
+    public void onSmite(BukkitCommandActor actor, EntitySelector<Player> players) {
+        if (actor.isPlayer()) {
+            players.remove(actor.requirePlayer());
         }
-        target.getWorld().strikeLightning(target.getLocation());
-        say(sender, "Smited &a" + target.getName() + "&7.");
+        players.forEach(p -> p.getWorld().strikeLightning(p.getLocation()));
+        actor.reply("Smited player(s).");
     }
 
-    @CommandHook("spawnmob")
-    public void onSpawnmob(final Player player, final EntityType type, final int count) {
+    @VRNCommand(cmd = "spawnmob", desc = "Spawns a mob where the player is looking or at a specific location.")
+    public void onSpawnmob(BukkitCommandActor actor, EntityType type, @Range(min = 1, max = 100) @Default("1") int count) {
+        Player player = actor.requirePlayer();
         if (!type.isSpawnable() && !type.isAlive()) {
-            say(player, "&cThat entity type cannot be spawned.");
+            actor.reply("&cThat entity type cannot be spawned.");
         }
-        if (count < 1) {
-            say(player, "&cMob count cannot be less than one.");
-            return;
-        } else if (count > 100) {
-            say(player, "&cMob count cannot be over 100.");
-            return;
-        }
-        final Block b = player.getTargetBlock(null, 50);
+        Block b = player.getTargetBlock(null, 50);
 
-        for (int i = 0; i < count; i++)
+        for (int i = 0; i < count; i++) {
             player.getWorld().spawnEntity(b.getLocation().clone().add(0.5, 1.0, 0.5), type);
-        say(player, "Spawned " + count + " " + type.toString().toLowerCase() + " at &a" +
+        }
+        actor.reply("Spawned " + count + " " + type.toString().toLowerCase() + " at &a" +
                 b.getLocation().getX() + "&7, &a" + b.getLocation().getY() + "&7, &a" + b.getLocation().getZ() + "&7.");
     }
 
-    @CommandHook("heal")
-    public void onHeal(final CommandSender sender, final Player target) {
+    @VRNCommand(cmd = "heal", desc = "Heals a player.")
+    public void onHeal(BukkitCommandActor actor, @Default("@s") Player target) {
+        Player player = actor.requirePlayer();
         target.setHealth(target.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue());
         target.setFoodLevel(20);
         target.setSaturation(5);
         target.setFireTicks(0);
         target.getActivePotionEffects().clear();
         say(target, "Your health and hunger are now full.");
-        if (target == sender) return;
-        say(sender, "&a" + target.getName() + "&7's health and hunger are now full.");
+        if (target == player) return;
+        actor.reply("&a" + target.getName() + "&7's health and hunger are now full.");
     }
 
-    @CommandHook("speed")
-    public void onSpeed(final CommandSender sender, final Player target, final int speed) {
+    @VRNCommand(cmd = "speed", desc = "Changes a player's fly and walk speed.")
+    public void onSpeed(BukkitCommandActor actor, @Range(min = 0, max = 10) @Default("1") int speed, @Default("@s") Player target) {
         if (speed == 1) {
             if (target.isFlying())
-                target.setFlySpeed((float) 0.1);
+                target.setFlySpeed(0.1f);
             else
-                target.setWalkSpeed((float) 0.2);
+                target.setWalkSpeed(0.2f);
             say(target, "Your " + (target.isFlying() ? "flying" : "walking") + " speed has been reset.");
-            if (target == sender) return;
-            say(sender, "&a" + target.getName() + "&7's " + (target.isFlying() ? "flying" : "walking") + " speed has been reset.");
-        } else {
-            float f = speed;
-            if (target.isFlying()) {
-                if (speed > 10)
-                    f = 10;
-                if (speed < 0)
-                    f = 0;
-                target.setFlySpeed(f / 10);
-            } else {
-                if (speed > 10)
-                    f = 10;
-                if (speed < 0)
-                    f = 0;
-                target.setWalkSpeed(0.12f + (0.088f * f));
-            }
-            say(target, "Your " + (target.isFlying() ? "flying" : "walking") + " speed has been set to &a" +
-                    (target.isFlying() ? f : (int) ((0.12f + (0.088f * f)) * 10)) + "&7.");
-            if (target == sender) return;
-            say(sender, "&a" + target.getName() + "&7's " + (target.isFlying() ? "flying" : "walking") + " speed has been set to &a" +
-                    (target.isFlying() ? f : (int) ((0.12f + (0.088f * f)) * 10)) + "&7.");
-        }
-    }
-
-    @CommandHook("timeplayedget")
-    public void onTimePlayedGet(final CommandSender sender, final CompletableFuture<OfflinePlayer> target) {
-        target.thenComposeAsync(offPlayer -> VRNCore.getPlayerData(offPlayer.getUniqueId()).thenAcceptAsync(data -> {
-            VRNCore.getPlayerData(offPlayer.getUniqueId());
-            say(sender, (offPlayer == sender ? "Your" : "&a" + offPlayer.getName() + "&7's") +
-                    " time played is &a" + timeToMessage(data.getTimePlayed()) + "&7.");
-        }));
-    }
-
-    @CommandHook("timeplayedset")
-    public void onTimePlayedSet(final CommandSender sender, final CompletableFuture<OfflinePlayer> target, final String time) {
-        final long totalsec;
-        try {
-            totalsec = TimeUtil.parseTimeString(time);
-        } catch (final TimeUtil.TimeFormatException e) {
-            say(sender, e.getMessage());
-            return;
-        }
-        target.thenComposeAsync(offPlayer -> VRNCore.getPlayerData(offPlayer.getUniqueId()).thenAcceptAsync(data -> {
-            data.setTimePlayed(totalsec);
-            say(sender, "Time played set to &a" + TimeUtil.timeToMessage(totalsec) + (offPlayer == sender ? "&7." : "&7 for &a" + offPlayer.getName() + "&7."));
-        }));
-    }
-
-    @CommandHook("timeplayedadd")
-    public void onTimePlayedAdd(final CommandSender sender, final CompletableFuture<OfflinePlayer> target, final String time) {
-        final long totalsec;
-        try {
-            totalsec = TimeUtil.parseTimeString(time);
-        } catch (final TimeUtil.TimeFormatException e) {
-            say(sender, e.getMessage());
-            return;
-        }
-        target.thenComposeAsync(offPlayer -> VRNCore.getPlayerData(offPlayer.getUniqueId()).thenAcceptAsync(data -> {
-            final long total = data.getTimePlayed() + totalsec;
-            data.setTimePlayed(total);
-            say(sender, "Added &a" + TimeUtil.timeToMessage(totalsec) + "&7 to " + (offPlayer == sender ? "your" : "&a" + offPlayer.getName() + "&7's") +
-                    " time. " + (offPlayer == sender ? "Your" : "Their") + " total time is now &a" + TimeUtil.timeToMessage(total) + "&7.");
-        }));
-    }
-
-    @CommandHook("timeplayedsubtract")
-    public void onTimePlayedSubtract(final CommandSender sender, final CompletableFuture<OfflinePlayer> target, final String time) {
-        final long totalsec;
-        try {
-            totalsec = TimeUtil.parseTimeString(time);
-        } catch (final TimeUtil.TimeFormatException e) {
-            say(sender, e.getMessage());
-            return;
-        }
-        target.thenComposeAsync(offPlayer -> VRNCore.getPlayerData(offPlayer.getUniqueId()).thenAcceptAsync(data -> {
-            final long total = data.getTimePlayed() - totalsec;
-            if (total < 0) {
-                data.setTimePlayed(0L);
-                say(sender, "Time played set to &a0 seconds &7" + (offPlayer == sender ? "." : " for &a" + offPlayer.getName() + "&7."));
+            if (target == actor.sender()) {
                 return;
             }
+            actor.reply("&a" + target.getName() + "&7's " + (target.isFlying() ? "flying" : "walking") + " speed has been reset.");
+        } else {
+            if (target.isFlying()) {
+                target.setFlySpeed(speed * 0.1f);
+            } else {
+                target.setWalkSpeed(speed * 0.1f);
+            }
+            say(target, "Your " + (target.isFlying() ? "flying" : "walking") + " speed has been set to &a" + speed + "&7.");
+            if (target == actor.sender()) return;
+            actor.reply("&a" + target.getName() + "&7's " + (target.isFlying() ? "flying" : "walking") + " speed has been set to &a" + speed + "&7.");
+        }
+    }
+
+    @VRNCommand(cmd = "timeplayed get", desc = "Checks the time that a player has been on the server.")
+    public CompletableFuture<Void> onTimePlayedGet(BukkitCommandActor actor, @Default("@s") OfflinePlayer target) {
+        return VRNCore.getPlayerData(target.getUniqueId()).thenAcceptAsync(data -> {
+            VRNCore.getPlayerData(target.getUniqueId());
+            actor.reply((target == actor.sender() ? "Your" : "&a" + target.getName() + "&7's") +
+                    " time played is &a" + timeToMessage(data.getTimePlayed()) + "&7.");
+        });
+    }
+
+    @VRNCommand(cmd = "timeplayed set", desc = "Sets the time that a player has been on the server.")
+    public CompletableFuture<Void> onTimePlayedSet(BukkitCommandActor actor, String time, @Default("@s") OfflinePlayer target) {
+        long totalsec;
+        try {
+            totalsec = TimeUtil.parseTimeString(time);
+        } catch (TimeUtil.TimeFormatException e) {
+            return CompletableFuture.runAsync(() -> actor.error(e.getMessage()));
+        }
+        return VRNCore.getPlayerData(target.getUniqueId()).thenAcceptAsync(data -> {
+            data.setTimePlayed(totalsec);
+            actor.reply("Time played set to &a" + TimeUtil.timeToMessage(totalsec) +
+                    (actor.sender() == target ? "&7." : "&7 for &a" + target.getName() + "&7."));
+        });
+    }
+
+    @VRNCommand(cmd = "timeplayed add", desc = "Adds to the time that a player has been on the server.")
+    public CompletableFuture<Void> onTimePlayedAdd(BukkitCommandActor actor, String time, @Default("@s") OfflinePlayer target) {
+        long totalsec;
+        try {
+            totalsec = TimeUtil.parseTimeString(time);
+        } catch (TimeUtil.TimeFormatException e) {
+            return CompletableFuture.runAsync(() -> actor.error(e.getMessage()));
+        }
+        return VRNCore.getPlayerData(target.getUniqueId()).thenAcceptAsync(data -> {
+            long total = data.getTimePlayed() + totalsec;
             data.setTimePlayed(total);
-            say(sender, "Subtracted &a" + TimeUtil.timeToMessage(totalsec) + "&7 from " + (offPlayer == sender ? "your" : "&a" + offPlayer.getName() + "&7's") +
-                    " time. " + (offPlayer == sender ? "Your" : "Their") + " total time is now &a" + TimeUtil.timeToMessage(total) + "&7.");
-        }));
+            actor.reply("Added &a" + TimeUtil.timeToMessage(totalsec) + "&7 to " +
+                    (actor.sender() == target ? "your" : "&a" + target.getName() + "&7's") + " time. " +
+                    (actor.sender() == target ? "Your" : "Their") + " total time is now &a" + TimeUtil.timeToMessage(total) + "&7.");
+        });
     }
 
-    @CommandHook("fly")
-    public void onFly(final CommandSender sender, final Player target) {
+    @VRNCommand(cmd = "timeplayed subtract", desc = "Subtracts from the time that a player has been on the server.")
+    public CompletableFuture<Void> onTimePlayedSubtract(BukkitCommandActor actor, String time, @Default("@s") OfflinePlayer target) {
+        long totalsec;
+        try {
+            totalsec = TimeUtil.parseTimeString(time);
+        } catch (final TimeUtil.TimeFormatException e) {
+            return CompletableFuture.runAsync(() -> actor.error(e.getMessage()));
+        }
+        return VRNCore.getPlayerData(target.getUniqueId()).thenAcceptAsync(data -> {
+            long finalTotalSec = totalsec;
+            long timeplayed = data.getTimePlayed();
+            if (finalTotalSec > timeplayed) {
+                finalTotalSec = timeplayed;
+            }
+            long total = timeplayed - finalTotalSec;
+            data.setTimePlayed(total);
+            String timeString = TimeUtil.timeToMessage(total);
+            if (total < 1) {
+                timeString = "0 seconds";
+            }
+            actor.reply("Subtracted &a" + TimeUtil.timeToMessage(finalTotalSec) + "&7 from " +
+                    (actor.sender() == target ? "your" : "&a" + target.getName() + "&7's") + " time. " +
+                    (actor.sender() == target ? "Your" : "Their") + " total time is now &a" + timeString + "&7.");
+        });
+    }
+
+    @VRNCommand(cmd = "fly", desc = "Toggles flight for a player.")
+    public void onFly(BukkitCommandActor actor, @Default("@s") Player target) {
         target.setAllowFlight(!target.getAllowFlight());
-        say(target, "Fly mode has been " + (target.getAllowFlight() ? "enabled" : "disabled") + ".");
-        if (target == sender) return;
-        say(sender, "&a" + target.getName() + "&7's fly mode has been " + (target.getAllowFlight() ? "enabled" : "disabled") + ".");
+        say(target, "Flight mode is now " + (target.getAllowFlight() ? "&aenabled" : "&cdisabled") + "&7.");
+        if (target == actor.sender()) return;
+        actor.reply( "&a" + target.getName() + "&7's flight mode has been " + (target.getAllowFlight() ? "&aenabled" : "&cdisabled") + "&7.");
     }
 
-    @CommandHook("gms")
-    public void onGmSurvival(final CommandSender sender, final Player target) {
-        target.setGameMode(GameMode.SURVIVAL);
-        say(target, "You are now in &asurvival&7 mode.");
-        if (target == sender) return;
-        say(sender, "&a" + target.getName() + " &7is now in &asurvival&7 mode.");
+    @VRNCommand(cmd = {"gamemode", "gm"}, desc = "Changes a player's game mode.")
+    public void onGamemode(BukkitCommandActor actor, GameMode gamemode, @Default("@s") Player target) {
+        target.setGameMode(gamemode);
+        say(target, "You are now in &a" + gamemode.name().toLowerCase() + "&7 mode.");
+        if (actor.sender() == target) return;
+        actor.reply( "&a" + target.getName() + " &7is now in &a" + gamemode.name().toLowerCase() + "&7 mode.");
     }
 
-    @CommandHook("gmc")
-    public void onGmCreative(final CommandSender sender, final Player target) {
-        target.setGameMode(GameMode.CREATIVE);
-        say(target, "You are now in &acreative&7 mode.");
-        if (target == sender) return;
-        say(sender, "&a" + target.getName() + " &7is now in &acreative&7 mode.");
-    }
-
-    @CommandHook("gma")
-    public void onGmAdventure(final CommandSender sender, final Player target) {
-        target.setGameMode(GameMode.ADVENTURE);
-        say(target, "You are now in &aadventure&7 mode.");
-        if (target == sender) return;
-        say(sender, "&a" + target.getName() + " &7is now in &aadventure&7 mode.");
-    }
-
-    @CommandHook("gmsp")
-    public void onGmSpectator(final CommandSender sender, final Player target) {
-        target.setGameMode(GameMode.SPECTATOR);
-        say(target, "You are now in &aspectator&7 mode.");
-        if (target == sender) return;
-        say(sender, "&a" + target.getName() + " &7is now in &aspectator&7 mode.");
-    }
-
-    @CommandHook("god")
-    public void onGod(final CommandSender sender, final CompletableFuture<OfflinePlayer> target) {
-        target.thenComposeAsync(offPlayer -> VRNCore.getPlayerData(offPlayer.getUniqueId()).thenAcceptAsync(data -> {
+    @VRNCommand(cmd = "god", desc = "Makes a player invulnerable.")
+    public CompletableFuture<Void> onGod(BukkitCommandActor actor, @Default("@s") OfflinePlayer target) {
+        return VRNCore.getPlayerData(target.getUniqueId()).thenAcceptAsync(data -> {
             PlayerStates states = data.getStates();
             states.setGodmode(!states.hasGodmode());
-            if (offPlayer.getPlayer() != null) {
-                say(offPlayer.getPlayer(), "You are " + (states.hasGodmode() ? "now" : "no longer") + " invulnerable.");
+            if (target.getPlayer() != null) {
+                say(target.getPlayer(), "You are " + (states.hasGodmode() ? "now" : "no longer") + " invulnerable.");
             }
-            if (offPlayer == sender) return;
-            say(sender, "&a" + offPlayer.getName() + " &7is " + (states.hasGodmode() ? "now" : "no longer") + " invulnerable.");
-        }));
+            if (target == actor.sender()) return;
+            actor.reply("&a" + target.getName() + " &7is " + (states.hasGodmode() ? "now" : "no longer") + " invulnerable.");
+        }, Task::syncDelayed);
+    }
+
+    @VRNCommand(cmd = "repair", desc = "Repairs items in a player's inventory.")
+    public void onRepair(BukkitCommandActor actor, EquipmentSlot slot, @Default("@s") Player target) {
+        ItemStack item = target.getInventory().getItem(slot);
+        if (item.getType().isAir()) {
+            actor.reply("&cNo item in the " + slot.name().toLowerCase() + " slot was found.");
+            return;
+        }
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null || item.getType().getMaxDurability() < 1 || !(meta instanceof Damageable damageable)) {
+            actor.reply("&cThis item cannot be repaired.");
+            return;
+        }
+        else if (damageable.getDamage() < 1) {
+            actor.reply("&cNothing to repair; item is already at full durability.");
+            return;
+        }
+        damageable.setDamage(0);
+        item.setItemMeta(meta);
+        target.getInventory().setItem(slot, item);
+        actor.reply("&aRepaired " + (target == actor.sender() ? "your" : target.getName() + "'s") + " item in the " + slot.name().toLowerCase() + " slot.");
     }
 }

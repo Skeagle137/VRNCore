@@ -1,7 +1,7 @@
 package net.skeagle.vrncore.hook;
 
 import net.milkbowl.vault.chat.Chat;
-import net.skeagle.vrncore.Settings;
+import net.skeagle.vrncore.configurable.Settings;
 import net.skeagle.vrncore.playerdata.PlayerData;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;

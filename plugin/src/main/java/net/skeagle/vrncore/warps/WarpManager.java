@@ -45,16 +45,16 @@ public class WarpManager {
     }
 
     public Warp getWarp(String name) {
-        return warps.stream().filter(w -> w.name().equalsIgnoreCase(name)).findFirst().orElse(null);
+        return warps.stream().filter(w -> w.getName().equalsIgnoreCase(name)).findFirst().orElse(null);
     }
 
     public long getWarpsOwned(Player player) {
-        return warps.stream().filter(w -> w.owner().equals(player.getUniqueId())).count();
+        return warps.stream().filter(w -> w.getOwner().equals(player.getUniqueId())).count();
     }
 
     public CompletableFuture<Void> deleteWarp(Warp warp) {
         warps.remove(warp);
-        return CompletableFuture.runAsync(() -> db.execute("DELETE FROM warps WHERE name = ? AND owner = ?", warp.name(), warp.owner()));
+        return CompletableFuture.runAsync(() -> db.execute("DELETE FROM warps WHERE name = ? AND owner = ?", warp.getName(), warp.getOwner()));
     }
 
     public Set<Warp> getWarps() {

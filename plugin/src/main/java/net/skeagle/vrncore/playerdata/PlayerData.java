@@ -1,11 +1,11 @@
 package net.skeagle.vrncore.playerdata;
 
-import net.skeagle.vrncommands.BukkitUtils;
 import net.skeagle.vrncore.VRNCore;
 import net.skeagle.vrncore.hook.HookManager;
 import net.skeagle.vrncore.trail.TrailType;
 import net.skeagle.vrncore.utils.VRNUtil;
-import net.skeagle.vrncore.Settings;
+import net.skeagle.vrncore.configurable.Settings;
+import net.skeagle.vrnlib.misc.FormatUtils;
 import net.skeagle.vrnlib.sql.SQLHelper;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -52,7 +52,7 @@ public class PlayerData {
     }
 
     public String getName() {
-        return nickname != null ? BukkitUtils.color(nickname + "&r") : this.getPlayer().getName();
+        return nickname != null ? FormatUtils.color(nickname + "&r") : this.getPlayer().getName();
     }
 
     public void updateName() {
@@ -66,7 +66,7 @@ public class PlayerData {
             if (HookManager.isVaultLoaded()) {
                 listname = HookManager.format(this, Settings.listFormat);
             }
-            player.setPlayerListName(BukkitUtils.color(listname != null ? listname : this.getName()));
+            player.setPlayerListName(FormatUtils.color(listname != null ? listname : this.getName()));
         }
     }
 

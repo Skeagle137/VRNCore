@@ -65,10 +65,10 @@ public class Reward {
     }
 
     void sendFirework(final Location loc) {
-        final Firework fw = (Firework) loc.getWorld().spawnEntity(loc, EntityType.FIREWORK);
+        final Firework fw = (Firework) loc.getWorld().spawnEntity(loc, EntityType.FIREWORK_ROCKET);
         final String id = String.valueOf(fw.getEntityId());
         new EventListener<>(EntityDamageByEntityEvent.class, (l, e) -> {
-            if (e.getDamager().getType() == EntityType.FIREWORK && e.getDamager().getScoreboardTags().stream().anyMatch(id::equals)) {
+            if (e.getDamager().getType() == EntityType.FIREWORK_ROCKET && e.getDamager().getScoreboardTags().stream().anyMatch(id::equals)) {
                 e.setCancelled(true);
             }
             Task.asyncDelayed(l::unregister, 60);

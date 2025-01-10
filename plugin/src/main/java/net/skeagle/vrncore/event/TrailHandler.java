@@ -65,9 +65,7 @@ public class TrailHandler implements Listener {
                 projectileCache.put(e.getPlayer(), e.getTrailData());
             }
 
-            if (e.shouldUpdateStyle()) {
-                e.getTrailData().getTrailStyle().updateData(e.getTrailData());
-            }
+            e.getTrailData().getTrailStyle().updateData(e.getTrailData());
         });
     }
 

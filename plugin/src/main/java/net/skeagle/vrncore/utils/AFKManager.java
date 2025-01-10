@@ -1,10 +1,11 @@
 package net.skeagle.vrncore.utils;
 
-import net.skeagle.vrncore.Settings;
+import net.skeagle.vrncore.configurable.Settings;
 import net.skeagle.vrnlib.misc.EventListener;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -21,12 +22,18 @@ public final class AFKManager {
 
     public AFKManager() {
         new EventListener<>(PlayerMoveEvent.class, e -> {
-            AFKManager manager = getAfkManager(e.getPlayer());
-            Location loc = e.getPlayer().getLocation();
+            Player player = e.getPlayer();
+            AFKManager manager = getAfkManager(player);
+            Location loc = player.getLocation();
             if (manager.savedLocation == null) return;
             if (manager.savedLocation.getX() != loc.getX() || manager.savedLocation.getY() != loc.getY() || manager.savedLocation.getZ() != loc.getZ()) {
                 manager.idle = Settings.idleTrailActivation;
             }
+        });
+        new EventListener<>(PlayerQuitEvent.class, e -> {
+            Player player = e.getPlayer();
+            AFKManager manager = getAfkManager(player);
+            manager.remove(player);
         });
     }
 

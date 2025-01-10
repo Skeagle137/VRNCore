@@ -1,28 +1,26 @@
 package net.skeagle.vrncore.commands;
 
-import net.skeagle.vrncommands.BukkitMessages;
-import net.skeagle.vrncommands.CommandHook;
 import net.skeagle.vrncore.VRNCore;
 import net.skeagle.vrncore.playerdata.PlayerStates;
 import net.skeagle.vrncore.utils.VRNUtil;
+import net.skeagle.vrnlib.messages.Messages;
 import net.skeagle.vrnlib.misc.EventListener;
 import net.skeagle.vrnlib.misc.Task;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.block.Block;
-import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import revxrsal.commands.bukkit.actor.BukkitCommandActor;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-import static net.skeagle.vrncore.utils.VRNUtil.say;
+import static net.skeagle.vrnlib.VRNLib.say;
 
-@SuppressWarnings("unused")
 public class TpCommands {
 
     private final TpaUtil tpaUtil;
@@ -37,127 +35,136 @@ public class TpCommands {
         });
     }
 
-    @CommandHook("tpall")
-    public void onTpAll(final Player player) {
+    @VRNCommand(cmd = "tpall", desc = "Teleports every online player to your location.")
+    public void onTpAll(BukkitCommandActor actor) {
+        Player player = actor.requirePlayer();
         for (final Player pl : Bukkit.getOnlinePlayers()) {
-            if (pl != player)
-                onTpHere(player, pl);
+            if (pl != player) {
+                pl.teleport(player.getLocation());
+            }
         }
-        say(player, BukkitMessages.msg("teleportedAll"));
+        actor.reply(Messages.msg("teleportedAll"));
     }
 
-    @CommandHook("tphere")
-    public void onTpHere(final Player player, final Player target) {
-        sayTp(player);
+    @VRNCommand(cmd = "tphere", desc = "Teleports a player to your location.")
+    public void onTpHere(BukkitCommandActor actor, Player target) {
+        Player player = actor.requirePlayer();
+        actor.reply(Messages.msg("teleporting"));
         target.teleport(player.getLocation());
     }
 
-    @CommandHook("top")
-    public void onTop(final Player player) {
+    @VRNCommand(cmd = "top", desc = "Teleports to the highest block above you.")
+    public void onTop(BukkitCommandActor actor) {
+        Player player = actor.requirePlayer();
         final int y;
         final Block b = VRNUtil.getStandingBlock(player.getLocation());
         if (b != null)
             y = player.getWorld().getHighestBlockYAt(b.getLocation());
         else
             y = player.getWorld().getHighestBlockYAt(player.getLocation());
-        sayTp(player);
+        actor.reply(Messages.msg("teleporting"));
         final Location loc = player.getLocation().clone();
         loc.setY(y + 1);
         player.teleport(loc);
     }
 
-    @CommandHook("back")
-    public void onBack(final Player player, final Player target) {
+    @VRNCommand(cmd = "back", desc = "Teleports back to a player's previous location.")
+    public void onBack(BukkitCommandActor actor, Player target) {
+        Player player = actor.requirePlayer();
         final Location backLoc = backCache.getBackLoc(target.getUniqueId());
         if (backLoc == null) {
-            say(player, target == player ? "&cYou do not have anywhere to teleport back to."
-                    : "&a" + target.getName() + " &7does not have a saved last location.");
+            actor.error(target == player ? "You do not have anywhere to teleport back to."
+                    : target.getName() + " does not have a saved last location.");
             return;
         }
         final Location newLoc = player.getLocation();
         backCache.teleToBackLoc(player, target);
         backCache.setBackLoc(player.getUniqueId(), newLoc);
-        say(player, target == player ? "&7Teleported to your last location."
-                : "&7Teleported to &a" + target.getName() + "&7's last location.");
+        actor.reply("Teleported to " + (target == player ? "your" : "&a" + target.getName() + "&7's") + " last location.");
         backCache.setBackLoc(player.getUniqueId(), newLoc);
     }
 
-    @CommandHook("tpa")
-    public void onTpa(final Player player, final Player target) {
+    @VRNCommand(cmd = "tpa", desc = "Requests to teleport to a player.")
+    public void onTpa(BukkitCommandActor actor, Player target) {
+        Player player = actor.requirePlayer();
         if (player == target) {
-            say(player, "&cYou cannot teleport to yourself.");
+            actor.error("You cannot teleport to yourself.");
             return;
         }
         if (tpaUtil.getRequestWhereSender(player) != null) {
-            say(player, "&cYou already have a pending teleport request.");
+            actor.error("You already have a pending teleport request.");
             return;
         }
         tpaUtil.addRequest(player, target, TpaUtil.RequestType.THERE).thenAccept(sent -> {
             if (!sent) {
-                say(player, "&c" + target.getName() + " has teleport requests disabled.");
+                actor.error(target.getName() + " has teleport requests disabled.");
                 return;
             }
-            say(player, "Teleport request sent.");
+            actor.reply("Teleport request sent.");
             say(target, "&a" + player.getName() + " &7is requesting to teleport to you. " +
                     "Do /tpaccept to accept the request or /tpdeny to deny it. This request will expire in 2 minutes.");
         });
     }
 
-    @CommandHook("tpdeny")
-    public void onTpdeny(final Player player) {
+    @VRNCommand(cmd = "tpadeny", desc = "Denies a pending teleport request from another player.")
+    public void onTpdeny(BukkitCommandActor actor) {
+        Player player = actor.requirePlayer();
         if (tpaUtil.getRequestWhereReciever(player) == null) {
-            say(player, "&cYou do not have any pending teleport requests.");
+            actor.error("You do not have any pending teleport requests.");
             return;
         }
         final TpaUtil.TpaRequest request = tpaUtil.getRequestWhereReciever(player);
         final OfflinePlayer sender = Bukkit.getOfflinePlayer(request.sender);
-        say(player, "&7Denied the teleport request from &a" + sender.getName() + "&7.");
+        actor.reply("Denied the teleport request from &a" + sender.getName() + "&7.");
         if (sender.isOnline())
             say((Player) sender, "&cYour teleport request was denied.");
         tpaUtil.deleteRequest(request, false);
     }
 
-    @CommandHook("tpaccept")
-    public void onTpaccept(final Player player) {
+    @VRNCommand(cmd = "tpaccept", desc = "Accepts a pending teleport request from another player.")
+    public void onTpaccept(BukkitCommandActor actor) {
+        Player player = actor.requirePlayer();
         if (tpaUtil.getRequestWhereReciever(player) == null) {
-            say(player, "&cYou do not have any pending teleport requests.");
+            actor.error("You do not have any pending teleport requests.");
             return;
         }
         final TpaUtil.TpaRequest request = tpaUtil.getRequestWhereReciever(player);
         final OfflinePlayer sender = Bukkit.getOfflinePlayer(request.sender);
         if (!sender.isOnline()) {
-            say(player, "&cCould not teleport " + sender.getName() + " since they are offline.");
+            actor.error("Could not teleport " + sender.getName() + " since they are offline.");
             return;
         }
         tpaUtil.teleportPlayers(request);
-        say(player, "&7Accepted the teleport request from &a" + sender.getName() + "&7.");
+        actor.reply("Accepted the teleport request from &a" + sender.getName() + "&7.");
     }
 
-    @CommandHook("tpahere")
-    public void onTpaHere(final Player player, final Player target) {
+    @VRNCommand(cmd = "tpahere", desc = "Requests a player to teleport to you.")
+    public void onTpaHere(BukkitCommandActor actor, Player target) {
+        Player player = actor.requirePlayer();
         if (player == target) {
-            say(player, "&cYou cannot teleport to yourself.");
+            actor.error("You cannot teleport to yourself.");
             return;
         }
         if (tpaUtil.getRequestWhereSender(player) != null) {
-            say(player, "&cYou already have a pending teleport request.");
+            actor.error("You already have a pending teleport request.");
             return;
         }
         tpaUtil.addRequest(player, target, TpaUtil.RequestType.HERE).thenAccept(sent -> {
             if (!sent) {
-                say(player, "&c" + target.getName() + " has teleport requests disabled.");
+                actor.error(target.getName() + " has teleport requests disabled.");
                 return;
             }
-            say(player, "Teleport request sent.");
+            actor.reply("Teleport request sent.");
             say(target, "&a" + player.getName() + " &7is requesting for you to teleport to them. " +
                     "Do /tpaccept to accept the request or /tpdeny to deny it. This request will expire in 2 minutes.");
         });
     }
 
-    @CommandHook("tpcancel")
-    public void onTpcancel(final Player player) {
+    @VRNCommand(cmd = "tpcancel", desc = "Cancels a teleport request that you have sent.")
+    public void onTpcancel(BukkitCommandActor actor) {
+        Player player = actor.requirePlayer();
         if (tpaUtil.getRequestWhereSender(player) == null) {
-            say(player, "&cYou already have a pending teleport request.");
+            actor.error("You already have a pending teleport request.");
             return;
         }
         final TpaUtil.TpaRequest request = tpaUtil.getRequestWhereSender(player);
@@ -165,20 +172,17 @@ public class TpCommands {
         if (reciever.isOnline())
             say((Player) reciever, "&c" + player.getName() + " cancelled their teleport request sent to you.");
         tpaUtil.deleteRequest(request, false);
-        say(player, "Cancelled the teleport request.");
+        actor.reply("Cancelled the teleport request.");
     }
 
-    @CommandHook("tptoggle")
-    public void onTpToggle(final Player player) {
+    @VRNCommand(cmd = "tptoggle", desc = "Toggles being able to receive teleport requests from other players.")
+    public void onTpToggle(BukkitCommandActor actor) {
+        Player player = actor.requirePlayer();
         VRNCore.getPlayerData(player.getUniqueId()).thenAccept(data -> {
             PlayerStates states = data.getStates();
             states.setTpDisabled(!states.isTpDisabled());
-            say(player, "Teleport requests are now &a" + (states.isTpDisabled() ? "disabled" : "enabled") + "&7.");
+            actor.reply("Teleport requests from other players are now " + (states.isTpDisabled() ? "&cdisabled" : "&aenabled") + "&7.");
         });
-    }
-
-    private void sayTp(final CommandSender sender) {
-        say(sender, BukkitMessages.msg("teleporting"));
     }
 
     private static class BackCache {

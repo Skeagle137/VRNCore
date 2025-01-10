@@ -1,6 +1,6 @@
 package net.skeagle.vrncore.GUIs;
 
-import net.skeagle.vrncommands.misc.FormatUtils;
+import net.skeagle.vrnlib.misc.FormatUtils;
 import net.skeagle.vrncore.VRNCore;
 import net.skeagle.vrncore.playerdata.TrailData;
 import net.skeagle.vrncore.trail.Style;
@@ -76,7 +76,7 @@ public class TrailsGUI {
                 panel.addPagedButton(itemOfPermission(player, particle.getPermission(data.getType()), new ItemBuilder(particle.getMaterial()).setName("&6" + particle.getParticleName())
                         .setLore("", "&7Click to select", "&7this " + data.getType().name().toLowerCase() + " trail.")
                         .glint(data.getParticle() != null && data.getParticle() == particle), (e, button) -> {
-                    Task.syncDelayed(player::closeInventory);
+                    Task.syncDelayed(() -> player.closeInventory());
                     data.setParticle(target, particle);
                     if (data.getTrailStyle() == null || !data.getTrailStyle().canApply(particle)) {
                         data.setStyle(target, Style.DEFAULT);
@@ -118,7 +118,7 @@ public class TrailsGUI {
                             //idle
                             case FIVE_POINTED_STAR, SIX_POINTED_STAR -> Material.NETHER_STAR;
                         }).setName("&e&l" + FormatUtils.toTitleCase(t.name())), (ev, button2) -> {
-                            Task.syncDelayed(player::closeInventory);
+                            Task.syncDelayed(() -> player.closeInventory());
                             data.setStyle(target, t);
                             VRNUtil.say(player, (target != player ? "&a" + target.getName() + "'s&7 " : "&7Your ") +
                                     "trail style has been changed to &a" + FormatUtils.toTitleCase(t.name()) + "&7.");
@@ -143,7 +143,7 @@ public class TrailsGUI {
                 new TrailOptionSelection<>(player, "&cTrail Fade Colors", Arrays.stream(TrailColors.values())
                         .filter(t -> particle.get() != Particle.NOTE || t != TrailColors.BLACK && t != TrailColors.WHITE).collect(Collectors.toList()),
                         t -> itemOfPermission(player, "vrn.trails.fadecolors." + t.name().toLowerCase(), new ItemBuilder(t.getWool()).setName(t.getDisplayName()), (ev, button2) -> {
-                            Task.syncDelayed(player::closeInventory);
+                            Task.syncDelayed(() -> player.closeInventory());
                             data.setFade(target, t.getColor());
                             VRNUtil.say(player, (target != player ? "&a" + target.getName() + "'s&7 " : "&7Your ") + "trail fade color has been changed to " + t.getDisplayName() + "&7.");
                         }, "", "&cYou cannot use", "&cthis trail fade color."));
@@ -154,7 +154,7 @@ public class TrailsGUI {
                 new TrailOptionSelection<>(player, "&cTrail Colors", Arrays.stream(TrailColors.values())
                         .filter(t -> particle.get() != Particle.NOTE || t != TrailColors.BLACK && t != TrailColors.WHITE).collect(Collectors.toList()),
                         t -> itemOfPermission(player, "vrn.trails.colors." + t.name().toLowerCase(), new ItemBuilder(t.getWool()).setName(t.getDisplayName()), (ev, button2) -> {
-                            Task.syncDelayed(player::closeInventory);
+                            Task.syncDelayed(() -> player.closeInventory());
                             data.setColor(target, t.getColor());
                             VRNUtil.say(player, (target != player ? "&a" + target.getName() + "'s&7 " : "&7Your ") + "trail color has been changed to " + t.getDisplayName() + "&7.");
                         }, "", "&cYou cannot use", "&cthis trail color."));

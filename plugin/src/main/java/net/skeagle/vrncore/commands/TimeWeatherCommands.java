@@ -1,80 +1,88 @@
 package net.skeagle.vrncore.commands;
 
-import net.skeagle.vrncommands.CommandHook;
 import org.bukkit.WeatherType;
 import org.bukkit.entity.Player;
+import revxrsal.commands.bukkit.actor.BukkitCommandActor;
 
-import static net.skeagle.vrncore.utils.VRNUtil.say;
-
-@SuppressWarnings("unused")
 public class TimeWeatherCommands {
 
-    @CommandHook("day")
-    public void onDay(final Player player) {
+    @VRNCommand(cmd = "day", desc = "Sets the time to day.", perm = "time")
+    public void onDay(BukkitCommandActor actor) {
+        Player player = actor.requirePlayer();
         player.getLocation().getWorld().setTime(1000);
-        say(player, "Time set to day.");
+        actor.reply("Time set to day.");
     }
 
-    @CommandHook("night")
-    public void onNight(final Player player) {
+    @VRNCommand(cmd = "night", desc = "Sets the time to night.", perm = "time")
+    public void onNight(BukkitCommandActor actor) {
+        Player player = actor.requirePlayer();
         player.getLocation().getWorld().setTime(13000);
-        say(player, "Time set to night.");
+        actor.reply("Time set to night.");
     }
 
-    @CommandHook("sun")
-    public void onSun(final Player player) {
+    @VRNCommand(cmd = "sun", desc = "Sets the weather to sun.", perm = "weather")
+    public void onSun(BukkitCommandActor actor) {
+        Player player = actor.requirePlayer();
         player.getLocation().getWorld().setStorm(false);
         player.getLocation().getWorld().setThundering(false);
-        say(player, "Weather set to sun.");
+        actor.reply("Weather set to sun.");
     }
 
-    @CommandHook("rain")
-    public void onRain(final Player player) {
+    @VRNCommand(cmd = "rain", desc = "Sets the weather to rain.", perm = "weather")
+    public void onRain(BukkitCommandActor actor) {
+        Player player = actor.requirePlayer();
         player.getLocation().getWorld().setStorm(true);
         player.getLocation().getWorld().setThundering(false);
-        say(player, "Weather set to rain.");
+        actor.reply("Weather set to rain.");
     }
 
-    @CommandHook("thunder")
-    public void onThunder(final Player player) {
+    @VRNCommand(cmd = "thunder", desc = "Sets the weather to thunder.", perm = "weather")
+    public void onThunder(BukkitCommandActor actor) {
+        Player player = actor.requirePlayer();
         player.getLocation().getWorld().setStorm(true);
         player.getLocation().getWorld().setThundering(true);
-        say(player, "Weather set to thunder.");
+        actor.reply("Weather set to thunder.");
     }
 
-    @CommandHook("pweathersun")
-    public void onPweatherSun(final Player player) {
+    @VRNCommand(cmd = "pweather", sub = "sun", desc = "Sets personal weather to sun.", perm = "pweather")
+    public void onPweatherSun(BukkitCommandActor actor) {
+        Player player = actor.requirePlayer();
         player.setPlayerWeather(WeatherType.CLEAR);
-        say(player, "Personal weather set to sun.");
+        actor.reply("Personal weather set to sun.");
     }
 
-    @CommandHook("pweatherrain")
-    public void onPweatherRain(final Player player) {
+    @VRNCommand(cmd = "pweather", sub = "rain", desc = "Sets personal weather to rain.", perm = "pweather")
+    public void onPweatherRain(BukkitCommandActor actor) {
+        Player player = actor.requirePlayer();
         player.setPlayerWeather(WeatherType.DOWNFALL);
-        say(player, "Personal weather set to rain.");
+        actor.reply("Personal weather set to rain.");
     }
 
-    @CommandHook("pweatherreset")
-    public void onPweatherReset(final Player player) {
+    @VRNCommand(cmd = "pweather", sub = "reset", desc = "Resets personal weather state.", perm = "pweather")
+    public void onPweatherReset(BukkitCommandActor actor) {
+        Player player = actor.requirePlayer();
         player.resetPlayerWeather();
-        say(player, "Personal weather has been reset.");
+        actor.reply("Personal weather has been reset.");
     }
 
-    @CommandHook("ptimeday")
-    public void onPtimeDay(final Player player) {
+    @VRNCommand(cmd = "ptime", sub = "day", desc = "Sets personal time to day.", perm = "ptime")
+    public void onPtimeDay(BukkitCommandActor actor) {
+        Player player = actor.requirePlayer();
         player.setPlayerTime(6000, false);
-        say(player, "Personal time set to day.");
+        actor.reply("Personal time set to day.");
     }
 
-    @CommandHook("ptimenight")
-    public void onPtimeNight(final Player player) {
+    @VRNCommand(cmd = "ptime", sub = "night", desc = "Sets personal time to night.", perm = "ptime")
+    public void onPtimeNight(BukkitCommandActor actor) {
+        Player player = actor.requirePlayer();
         player.setPlayerTime(18000, false);
-        say(player, "Personal time set to night.");
+        actor.reply("Personal time set to night.");
     }
 
-    @CommandHook("ptimereset")
-    public void onPtimeReset(final Player player) {
+    @VRNCommand(cmd = "ptime", sub = "reset", desc = "Resets personal time state.", perm = "ptime")
+    public void onPtimeReset(BukkitCommandActor actor) {
+        Player player = actor.requirePlayer();
         player.resetPlayerTime();
-        say(player, "Personal time has been reset.");
+        actor.reply("Personal time has been reset.");
     }
 }

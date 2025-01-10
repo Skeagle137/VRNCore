@@ -1,9 +1,10 @@
 package net.skeagle.vrncore.utils;
 
 import com.google.gson.Gson;
-import net.skeagle.vrncommands.BukkitMessages;
-import net.skeagle.vrncommands.BukkitUtils;
-import net.skeagle.vrncore.Settings;
+import net.skeagle.vrncore.configurable.Settings;
+import net.skeagle.vrnlib.VRNLib;
+import net.skeagle.vrnlib.messages.Messages;
+import net.skeagle.vrnlib.misc.FormatUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
@@ -18,18 +19,12 @@ import java.util.stream.Collectors;
 public final class VRNUtil {
 
     public static final Gson GSON = new Gson();
-    public static final String NOPERM = BukkitMessages.msg("noPermission");
+    public static final String NOPERM = Messages.msg("noPermission");
 
     public static void say(CommandSender cs, String... message) {
         if (cs == null) return;
         for (String msg : message)
-            cs.sendMessage(BukkitUtils.color(BukkitMessages.msg("prefix") + " " + msg));
-    }
-
-    public static void sayNoPrefix(CommandSender cs, String... message) {
-        if (cs == null) return;
-        for (String msg : message)
-            cs.sendMessage(BukkitUtils.color(msg));
+            cs.sendMessage(FormatUtils.color(Messages.msg(VRNLib.getInstance(), "prefix") + msg));
     }
 
     public static void log(String... messages) {
@@ -39,7 +34,7 @@ public final class VRNUtil {
     public static void log(Level level, String... messages) {
         if (messages == null) return;
         for (String s : messages)
-            Bukkit.getLogger().log(level, BukkitUtils.color(s));
+            Bukkit.getLogger().log(level, FormatUtils.color(s));
     }
 
     public static int getLimitForPerm(Player player, String startsWith, int max) {

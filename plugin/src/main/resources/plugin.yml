@@ -5,4 +5,4 @@ author: Skeagle
 description: "A plugin containing many essentials-inspired commands and features, admin tools, cosmetics, and other helpful utilities."
 depend: [ VRNLib ]
 softdepend: [ Vault, LuckPerms, SuperVanish, PremiumVanish ]
-api-version: 1.20
+api-version: 1.21

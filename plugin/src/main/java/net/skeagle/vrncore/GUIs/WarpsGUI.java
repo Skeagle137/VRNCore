@@ -1,6 +1,5 @@
 package net.skeagle.vrncore.GUIs;
 
-import net.skeagle.vrncommands.BukkitMessages;
 import net.skeagle.vrncore.utils.VRNUtil;
 import net.skeagle.vrncore.warps.Warp;
 import net.skeagle.vrncore.warps.WarpManager;
@@ -8,6 +7,7 @@ import net.skeagle.vrnlib.inventorygui.InventoryGUI;
 import net.skeagle.vrnlib.inventorygui.ItemButton;
 import net.skeagle.vrnlib.inventorygui.PaginationPanel;
 import net.skeagle.vrnlib.itemutils.ItemBuilder;
+import net.skeagle.vrnlib.messages.Messages;
 import net.skeagle.vrnlib.misc.Task;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -26,11 +26,11 @@ public class WarpsGUI {
                 manager.getWarps().forEach(w ->
                         panel.addPagedButton(ItemButton.create(getIcon(w), e -> {
                             if (e.getClick().isLeftClick()) {
-                                Task.syncDelayed(player::closeInventory);
-                                VRNUtil.say(player, BukkitMessages.msg("teleporting"));
-                                player.teleport(w.location());
+                                Task.syncDelayed(() -> player.closeInventory());
+                                VRNUtil.say(player, Messages.msg("teleporting"));
+                                player.teleport(w.getLocation());
                             }
-                            if (e.getClick().isRightClick() && !w.owner().equals(player.getUniqueId())) {
+                            if (e.getClick().isRightClick() && !w.getOwner().equals(player.getUniqueId())) {
                                 if (!player.hasPermission("vrn.delwarp.others")) {
                                     player.closeInventory();
                                     VRNUtil.say(player, VRNUtil.NOPERM);
@@ -44,8 +44,8 @@ public class WarpsGUI {
     }
 
     private ItemStack getIcon(Warp w) {
-        Block b = VRNUtil.getStandingBlock(w.location());
-        return new ItemBuilder(b != null ? b.getType() : Material.BARRIER).setName("&7" + w.name());
+        Block b = VRNUtil.getStandingBlock(w.getLocation());
+        return new ItemBuilder(b != null ? b.getType() : Material.BARRIER).setName("&7" + w.getName());
     }
 
     private void deleteConfirm(WarpManager manager, Player player, Warp w) {
@@ -54,8 +54,8 @@ public class WarpsGUI {
         gui.getInventory().setItem(4, new ItemBuilder(Material.MAP).setName("&6Are you sure?").setLore("", "&eAre you sure you want to", "&edelete this warp?"));
         gui.addButton(ItemButton.create(new ItemBuilder(Material.LIME_WOOL).setName("&aConfirm"), e -> {
             manager.deleteWarp(w);
-            Task.syncDelayed(player::closeInventory);
-            VRNUtil.say(player, "&7Warp &a" + w.name() + "&7 successfully deleted.");
+            Task.syncDelayed(() -> player.closeInventory());
+            VRNUtil.say(player, "&7Warp &a" + w.getName() + "&7 successfully deleted.");
         }), 6);
         gui.open(player);
     }

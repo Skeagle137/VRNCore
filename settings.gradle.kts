@@ -9,6 +9,6 @@ rootProject.name = "VRNCore"
 
 include("api")
 include("plugin")
-include("nms-1_20_R1")
-include("nms-1_20_R2")
-include("nms-1_20_R3")
+include("nms-1_21_R1")
+include("nms-1_21_R2")
+include("nms-1_21_R3")
