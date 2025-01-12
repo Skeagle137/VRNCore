@@ -20,7 +20,7 @@ public final class AFKManager {
     private Location savedLocation;
     private int idle = Settings.idleTrailActivation;
 
-    public AFKManager() {
+    static {
         new EventListener<>(PlayerMoveEvent.class, e -> {
             Player player = e.getPlayer();
             AFKManager manager = getAfkManager(player);
