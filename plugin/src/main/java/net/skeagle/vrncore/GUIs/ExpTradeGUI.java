@@ -1,5 +1,6 @@
 package net.skeagle.vrncore.GUIs;
 
+import net.skeagle.vrnlib.itemutils.ItemUtils;
 import net.skeagle.vrnlib.misc.FormatUtils;
 import net.skeagle.vrncore.configurable.GuiConfig;
 import net.skeagle.vrncore.utils.VRNUtil;
@@ -92,10 +93,7 @@ public class ExpTradeGUI {
             }), 4);
 
             this.addButton(ItemButton.create(new ItemBuilder(Material.LIME_WOOL).setName("&aConfirm"), e -> {
-                Map<Integer, ItemStack> notRemoved = player.getInventory().removeItem(new ItemStack(mat, amount));
-                if (!notRemoved.isEmpty()) {
-                    player.getInventory().getItemInOffHand().setAmount(player.getInventory().getItemInOffHand().getAmount() - notRemoved.get(0).getAmount());
-                }
+                ItemUtils.remove(player.getInventory(), mat, amount);
                 player.giveExp(worth * ((amount % 64) + (stacks * 64)));
                 VRNUtil.say(player, "You traded &ax" + amount + " " + name + " &7for &a" + FormatUtils.truncateDouble(gain) + " &7exp level(s).");
                 Task.syncDelayed(() -> player.closeInventory());
