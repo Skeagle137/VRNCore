@@ -1,7 +1,6 @@
 package net.skeagle.vrncore.commands;
 
 import net.skeagle.vrncore.VRNCore;
-import net.skeagle.vrncore.GUIs.GivePlusGUI;
 import net.skeagle.vrncore.playerdata.PlayerStates;
 import net.skeagle.vrnlib.messages.Messages;
 import net.skeagle.vrnlib.misc.FormatUtils;
@@ -40,12 +39,6 @@ public class AdminCommands {
         Player player = actor.requirePlayer();
         player.openInventory(target.getEnderChest());
         actor.reply(target != player ? "Now showing &a" + target.getName() + "&7's ender chest." : "Now showing your ender chest.");
-    }
-
-    @VRNCommand(cmd = {"giveplus", "givep"}, desc = "Opens a gui for a quick way to obtain creative only items.")
-    public void onGivePlus(BukkitCommandActor actor) {
-        Player player = actor.requirePlayer();
-        new GivePlusGUI(actor, player);
     }
 
     @VRNCommand(cmd = "smite", desc = "Strikes a selection of players by summoning lightning at their location.")
