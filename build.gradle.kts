@@ -18,7 +18,7 @@ allprojects {
     }
 
     dependencies {
-        compileOnly("net.skeagle:vrnlib:2.2.0")
+        compileOnly("net.skeagle:vrnlib:2.2.1")
         compileOnly("com.mojang:authlib:6.0.54")
     }
 
