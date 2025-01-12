@@ -20,7 +20,7 @@ public class TrailData {
     private double size;
     private Style style;
     private TrailStyle trailStyle;
-    private double note = TrailColors.RED.getNote();
+    private double note;
 
     public TrailData(TrailType type) {
         this.type = type;
@@ -28,6 +28,8 @@ public class TrailData {
         this.fade = Color.WHITE;
         this.size = 1.0;
         this.style = Style.DEFAULT;
+        this.trailStyle = Style.DEFAULT.create(this);
+        this.note = TrailColors.RED.getNote();
     }
 
     public TrailData(TrailType type, Particles particle, Color color, Color fade, double size, Style style) {
@@ -38,6 +40,8 @@ public class TrailData {
         this.size = size;
         this.style = style;
         this.trailStyle = style.create(this);
+        TrailColors trailColor = TrailColors.getFromColor(color);
+        this.note = trailColor != null ? trailColor.getNote() : TrailColors.RED.getNote();
     }
 
     public TrailType getType() {
