@@ -2,10 +2,15 @@ package net.skeagle.vrncore.nms.v1_21_R2;
 
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.network.protocol.game.*;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ClientInformation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.CommonListenerCookie;
+import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.server.players.PlayerList;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -27,6 +32,11 @@ public class VRNCoreNMS1_21_R2 implements VRNCoreNMS {
     @Override
     public void showDemoMenu(Player player) {
         ((CraftPlayer) player).getHandle().connection.send(new ClientboundGameEventPacket(ClientboundGameEventPacket.DEMO_EVENT, 0));
+    }
+
+    @Override
+    public void showCredits(Player player) {
+        ((CraftPlayer) player).getHandle().connection.send(new ClientboundGameEventPacket(ClientboundGameEventPacket.WIN_GAME, 0));
     }
 
     @Override
@@ -74,12 +84,15 @@ public class VRNCoreNMS1_21_R2 implements VRNCoreNMS {
     }
 
     @Override
-    public Npc createNpc(String name, Location location) {
-        final GameProfile profile = new GameProfile(UUID.randomUUID(), name);
-        final ServerPlayer npc = new ServerPlayer(((CraftServer) Bukkit.getServer()).getServer(), ((CraftWorld) location.getWorld()).getHandle(), profile, ClientInformation.createDefault());
-        npc.setXRot(location.getYaw());
-        npc.setYRot(location.getPitch());
-        npc.setPos(location.getX(), location.getY(), location.getZ());
-        return new NMSNpc(profile, npc);
+    public Npc createNpc(UUID uuid, String name, String displayName, Location location, String skinTexture, String skinSignature) {
+        final GameProfile profile = new GameProfile(uuid, name);
+        MinecraftServer server = ((CraftServer) Bukkit.getServer()).getServer();
+        final ServerPlayer npc = new ServerPlayer(server, ((CraftWorld) location.getWorld()).getHandle(), profile, ClientInformation.createDefault());
+        npc.connection = new ServerGamePacketListenerImpl(server, new Connection(PacketFlow.SERVERBOUND), npc, CommonListenerCookie.createInitial(profile, false));
+        npc.forceSetPositionRotation(location.getX(), location.getY(), location.getZ(), location.getYaw(), location.getPitch());
+        if (displayName != null) {
+            npc.displayName = displayName;
+        }
+        return new NMSNpc(profile, npc, skinTexture, skinSignature);
     }
 }

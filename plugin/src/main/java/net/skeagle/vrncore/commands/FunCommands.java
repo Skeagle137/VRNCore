@@ -33,6 +33,12 @@ public class FunCommands {
         actor.reply("Now showing &a" + target.getName() + "&7 the demo menu.");
     }
 
+    @VRNCommand(cmd = "credits", desc = "Shows the credits screen to a player.")
+    public void onCredits(BukkitCommandActor actor, Player target) {
+        api.showCredits(target);
+        actor.reply("Now showing &a" + target.getName() + "&7 the credits.");
+    }
+
     @VRNCommand(cmd = "sudo", desc = "Forces a user to chat or execute a command.")
     public void onSudo(BukkitCommandActor actor, Player target, String command) {
         if (!command.startsWith("/")) {
@@ -73,7 +79,7 @@ public class FunCommands {
         }
         final Skin skin = SkinUtil.getSkin(name);
         if (skin == null) {
-            actor.reply("Could not be retrieve skin URL. Likely there is no player with this name.");
+            actor.error("Could not be retrieve skin URL. Likely there is no player with this name.");
             return;
         }
         replaceSkin(target, skin);

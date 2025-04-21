@@ -4,11 +4,13 @@ import org.bukkit.entity.Player;
 
 public interface Npc {
 
-    default void updateForPlayer(Player player) {
-        this.updateForPlayer(player, null, null);
-    }
+    void setName(String name);
 
-    void updateForPlayer(Player player, String skinTexture, String skinSignature);
+    void setDisplayName(String displayName);
+
+    void setSkin(String skinTexture, String skinSignature);
+
+    void updateForPlayer(Player player);
 
     void removeForPlayer(Player player);
 }

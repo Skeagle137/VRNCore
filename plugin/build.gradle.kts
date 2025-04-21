@@ -1,6 +1,6 @@
 plugins {
     `maven-publish`
-    id("com.gradleup.shadow") version "8.3.5"
+    id("com.gradleup.shadow") version "8.3.6"
 }
 
 dependencies {
@@ -8,6 +8,7 @@ dependencies {
     implementation(project(":nms-1_21_R1"))
     implementation(project(":nms-1_21_R2"))
     implementation(project(":nms-1_21_R3"))
+    implementation(project(":nms-1_21_R4"))
 
     compileOnly("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT")
     compileOnly("net.luckperms:api:5.4")

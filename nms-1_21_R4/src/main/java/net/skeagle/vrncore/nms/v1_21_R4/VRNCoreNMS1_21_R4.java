@@ -1,4 +1,4 @@
-package net.skeagle.vrncore.nms.v1_21_R1;
+package net.skeagle.vrncore.nms.v1_21_R4;
 
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
@@ -27,7 +27,7 @@ import org.bukkit.entity.Player;
 import java.util.List;
 import java.util.UUID;
 
-public class VRNCoreNMS1_21_R1 implements VRNCoreNMS {
+public class VRNCoreNMS1_21_R4 implements VRNCoreNMS {
 
     @Override
     public void showDemoMenu(Player player) {
@@ -87,12 +87,12 @@ public class VRNCoreNMS1_21_R1 implements VRNCoreNMS {
     public Npc createNpc(UUID uuid, String name, String displayName, Location location, String skinTexture, String skinSignature) {
         final GameProfile profile = new GameProfile(uuid, name);
         MinecraftServer server = ((CraftServer) Bukkit.getServer()).getServer();
-        final ServerPlayer npc = new ServerPlayer(server, ((CraftWorld) location.getWorld()).getHandle(), profile, ClientInformation.createDefault());
-        npc.connection = new ServerGamePacketListenerImpl(server, new Connection(PacketFlow.SERVERBOUND), npc, CommonListenerCookie.createInitial(profile, false));
-        npc.forceSetPositionRotation(location.getX(), location.getY(), location.getZ(), location.getYaw(), location.getPitch());
-        if (displayName != null) {
-            npc.displayName = displayName;
-        }
-        return new NMSNpc(profile, npc, skinTexture, skinSignature);
+        final ServerPlayer npcPlayer = new ServerPlayer(server, ((CraftWorld) location.getWorld()).getHandle(), profile, ClientInformation.createDefault());
+        npcPlayer.connection = new ServerGamePacketListenerImpl(server, new Connection(PacketFlow.SERVERBOUND), npcPlayer, CommonListenerCookie.createInitial(profile, false));
+        npcPlayer.forceSetPositionRotation(location.getX(), location.getY(), location.getZ(), location.getYaw(), location.getPitch());
+        Npc npc = new NMSNpc(profile, npcPlayer, skinTexture, skinSignature);
+        npc.setDisplayName(displayName);
+        npc.setSkin(skinTexture, skinSignature);
+        return npc;
     }
 }

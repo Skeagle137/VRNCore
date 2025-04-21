@@ -1,4 +1,4 @@
-package net.skeagle.vrncore.nms.v1_21_R1;
+package net.skeagle.vrncore.nms.v1_21_R4;
 
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
@@ -8,6 +8,8 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.server.level.ServerEntity;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
+import net.minecraft.world.scores.PlayerTeam;
+import net.minecraft.world.scores.Scoreboard;
 import net.skeagle.vrncore.api.Npc;
 import net.skeagle.vrnlib.misc.Task;
 import net.skeagle.vrnlib.nms.NMSObject;
@@ -19,6 +21,8 @@ import java.util.Set;
 
 class NMSNpc implements Npc {
 
+    private final static Scoreboard SCOREBOARD = new Scoreboard();
+    private final PlayerTeam team;
     private final GameProfile profile;
     private final ServerPlayer npcPlayer;
     private String skinTexture;
@@ -26,6 +30,7 @@ class NMSNpc implements Npc {
     private NMSObject profileWrapper;
 
     public NMSNpc(GameProfile profile, ServerPlayer npcPlayer, String skinTexture, String skinSignature) {
+        this.team = new PlayerTeam(SCOREBOARD, "display");
         this.profile = profile;
         this.npcPlayer = npcPlayer;
         this.skinTexture = skinTexture;
@@ -42,7 +47,7 @@ class NMSNpc implements Npc {
 
     @Override
     public void setDisplayName(String displayName) {
-        this.npcPlayer.displayName = displayName;
+
     }
 
     @Override
@@ -63,13 +68,14 @@ class NMSNpc implements Npc {
         ServerPlayer nmsPlayer = ((CraftPlayer) player).getHandle();
         nmsPlayer.connection.send(new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER, npcPlayer));
         nmsPlayer.connection.send(new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_DISPLAY_NAME, npcPlayer));
+        //nmsPlayer.connection.send(ClientboundSetPlayerTeamPacket.createPlayerPacket(team, player.getName(), ClientboundSetPlayerTeamPacket.Action.ADD));
         if (skinTexture != null && skinSignature != null) {
             npcPlayer.getEntityData().set(new EntityDataAccessor<>(17, EntityDataSerializers.BYTE), (byte) 127);
             Task.syncDelayed(() -> nmsPlayer.connection.send(new ClientboundSetEntityDataPacket(npcPlayer.getId(), npcPlayer.getEntityData().packAll())), 5);
         }
-        ServerEntity serverEntity = new ServerEntity(npcPlayer.serverLevel(), npcPlayer, 0, false, packet -> {}, Set.of());
+        ServerEntity serverEntity = new ServerEntity(npcPlayer.serverLevel(), npcPlayer, 0, false, packet -> {}, (p, l) -> {}, Set.of());
         nmsPlayer.connection.send(npcPlayer.getAddEntityPacket(serverEntity));
-        byte headRot = (byte) Mth.floor(npcPlayer.getYHeadRot() * 256.0F / 360.0F);
+        byte headRot = Mth.packDegrees(npcPlayer.getYHeadRot());
         nmsPlayer.connection.send(new ClientboundRotateHeadPacket(npcPlayer, headRot));
         Task.syncDelayed(() -> nmsPlayer.connection.send(new ClientboundPlayerInfoRemovePacket(List.of(npcPlayer.getUUID()))), 15);
     }

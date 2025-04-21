@@ -15,6 +15,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class NpcManager {
 
@@ -33,12 +34,13 @@ public class NpcManager {
         final SQLHelper db = VRNCore.getInstance().getDB();
         final SQLHelper.Results res = db.queryResults("SELECT * FROM npc");
         res.forEach(npc -> {
+            final UUID id = UUID.fromString(npc.getString(1));
             final String name = npc.getString(2);
             final String display = npc.getString(3);
             final Location loc = LocationUtils.fromString(npc.getString(4));
             final Skin skin = npc.getString(5) != null ? VRNUtil.GSON.fromJson(npc.getString(5), Skin.class) : null;
             final boolean rotateHead = npc.getBoolean(6);
-            npcList.add(new NpcData(api, name, display, loc, skin, rotateHead));
+            npcList.add(new NpcData(api, id, name, display, loc, skin, rotateHead));
         });
     }
 
@@ -54,7 +56,7 @@ public class NpcManager {
     }
 
     public NpcData createNPC(final String name, final Player player) {
-        final NpcData npc = new NpcData(api, name, name, player.getLocation().clone(), SkinUtil.getSkin(name), false);
+        final NpcData npc = new NpcData(api, UUID.randomUUID(), name, name, player.getLocation().clone(), SkinUtil.getSkin(name), false);
         npcList.add(npc);
         npc.save();
         return npc;
