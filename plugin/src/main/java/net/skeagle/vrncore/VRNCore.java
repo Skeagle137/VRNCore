@@ -15,6 +15,8 @@ import net.skeagle.vrncore.hook.HookManager;
 import net.skeagle.vrncore.nms.v1_21_R1.VRNCoreNMS1_21_R1;
 import net.skeagle.vrncore.nms.v1_21_R2.VRNCoreNMS1_21_R2;
 import net.skeagle.vrncore.nms.v1_21_R3.VRNCoreNMS1_21_R3;
+import net.skeagle.vrncore.nms.v1_21_R4.VRNCoreNMS1_21_R4;
+import net.skeagle.vrncore.nms.v1_21_R5.VRNCoreNMS1_21_R5;
 import net.skeagle.vrncore.npc.NpcData;
 import net.skeagle.vrncore.npc.NpcManager;
 import net.skeagle.vrncore.playerdata.PlayerData;
@@ -71,7 +73,13 @@ public final class VRNCore extends JavaPlugin {
     public void onEnable() {
         //NMS
         int version = VRNLib.VERSION;
-        if (version >= 2104 && version < 2200) {
+        if (version >= 2106 && version < 2200) {
+            api = new VRNCoreNMS1_21_R5();
+        }
+        else if (version == 2105) {
+            api = new VRNCoreNMS1_21_R4();
+        }
+        else if (version == 2104) {
             api = new VRNCoreNMS1_21_R3();
         }
         else if (version >= 2102) {
@@ -138,7 +146,7 @@ public final class VRNCore extends JavaPlugin {
                             case "creative", "c", "1" -> GameMode.CREATIVE;
                             case "adventure", "a", "2" -> GameMode.ADVENTURE;
                             case "spectator", "sp", "3" -> GameMode.SPECTATOR;
-                            default -> throw new EnumNotFoundException("'" + s + "' is not a valid gamemode.");
+                            default -> throw new EnumNotFoundException("'" + s + "' is not a valid gamemode.", GameMode.class);
                         };
                     });
                     builder.addParameterType(Home.class, (input, ctx) -> {

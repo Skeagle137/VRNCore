@@ -15,10 +15,11 @@ allprojects {
         maven("https://jitpack.io")
         maven("https://repo.skeagle.net/snapshots")
         gradlePluginPortal()
+        mavenLocal()
     }
 
     dependencies {
-        compileOnly("net.skeagle:vrnlib:2.2.2")
+        compileOnly("net.skeagle:vrnlib:2.2.3")
         compileOnly("com.mojang:authlib:6.0.54")
     }
 

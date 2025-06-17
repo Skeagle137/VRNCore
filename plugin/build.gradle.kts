@@ -9,12 +9,13 @@ dependencies {
     implementation(project(":nms-1_21_R2"))
     implementation(project(":nms-1_21_R3"))
     implementation(project(":nms-1_21_R4"))
+    implementation(project(":nms-1_21_R5"))
 
     compileOnly("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT")
     compileOnly("net.luckperms:api:5.4")
     compileOnly("com.github.MilkBowl:VaultAPI:1.7")
     compileOnly("com.github.LeonMangler:SuperVanish:6.2.18-3")
-    compileOnly("net.kyori:adventure-platform-bukkit:4.3.4")
+    compileOnly("net.kyori:adventure-platform-bukkit:4.4.0")
     compileOnly("org.xerial:sqlite-jdbc:3.47.0.0")
 }
 

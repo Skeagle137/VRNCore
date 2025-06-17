@@ -4,7 +4,6 @@ import net.skeagle.vrncore.VRNCore;
 import net.skeagle.vrncore.playerdata.PlayerStates;
 import net.skeagle.vrnlib.messages.Messages;
 import net.skeagle.vrnlib.misc.FormatUtils;
-import net.skeagle.vrnlib.misc.Task;
 import net.skeagle.vrnlib.misc.TimeUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
@@ -103,8 +102,8 @@ public class AdminCommands {
     }
 
     @VRNCommand(cmd = "timeplayed get", desc = "Checks the time that a player has been on the server.")
-    public CompletableFuture<Void> onTimePlayedGet(BukkitCommandActor actor, @Default("@s") OfflinePlayer target) {
-        return VRNCore.getPlayerData(target.getUniqueId()).thenAcceptAsync(data -> {
+    public void onTimePlayedGet(BukkitCommandActor actor, @Default("@s") OfflinePlayer target) {
+        VRNCore.getPlayerData(target.getUniqueId()).thenAcceptAsync(data -> {
             VRNCore.getPlayerData(target.getUniqueId());
             actor.reply((target == actor.sender() ? "Your" : "&a" + target.getName() + "&7's") +
                     " time played is &a" + timeToMessage(data.getTimePlayed()) + "&7.");
@@ -112,58 +111,61 @@ public class AdminCommands {
     }
 
     @VRNCommand(cmd = "timeplayed set", desc = "Sets the time that a player has been on the server.")
-    public CompletableFuture<Void> onTimePlayedSet(BukkitCommandActor actor, String time, @Default("@s") OfflinePlayer target) {
-        long totalsec;
+    public void onTimePlayedSet(BukkitCommandActor actor, String time, @Default("@s") OfflinePlayer target) {
+        long totalsec = 0;
         try {
             totalsec = TimeUtil.parseTimeString(time);
         } catch (TimeUtil.TimeFormatException e) {
-            return CompletableFuture.runAsync(() -> actor.error(e.getMessage()));
+            CompletableFuture.runAsync(() -> actor.error(e.getMessage()));
         }
-        return VRNCore.getPlayerData(target.getUniqueId()).thenAcceptAsync(data -> {
-            data.setTimePlayed(totalsec);
-            actor.reply("Time played set to &a" + TimeUtil.timeToMessage(totalsec) +
+        long finalTotalsec = totalsec;
+        VRNCore.getPlayerData(target.getUniqueId()).thenAcceptAsync(data -> {
+            data.setTimePlayed(finalTotalsec);
+            actor.reply("Time played set to &a" + timeToMessage(finalTotalsec) +
                     (actor.sender() == target ? "&7." : "&7 for &a" + target.getName() + "&7."));
         });
     }
 
     @VRNCommand(cmd = "timeplayed add", desc = "Adds to the time that a player has been on the server.")
-    public CompletableFuture<Void> onTimePlayedAdd(BukkitCommandActor actor, String time, @Default("@s") OfflinePlayer target) {
-        long totalsec;
+    public void onTimePlayedAdd(BukkitCommandActor actor, String time, @Default("@s") OfflinePlayer target) {
+        long totalsec = 0;
         try {
             totalsec = TimeUtil.parseTimeString(time);
         } catch (TimeUtil.TimeFormatException e) {
-            return CompletableFuture.runAsync(() -> actor.error(e.getMessage()));
+            CompletableFuture.runAsync(() -> actor.error(e.getMessage()));
         }
-        return VRNCore.getPlayerData(target.getUniqueId()).thenAcceptAsync(data -> {
-            long total = data.getTimePlayed() + totalsec;
+        long finalTotalsec = totalsec;
+        VRNCore.getPlayerData(target.getUniqueId()).thenAcceptAsync(data -> {
+            long total = data.getTimePlayed() + finalTotalsec;
             data.setTimePlayed(total);
-            actor.reply("Added &a" + TimeUtil.timeToMessage(totalsec) + "&7 to " +
+            actor.reply("Added &a" + timeToMessage(finalTotalsec) + "&7 to " +
                     (actor.sender() == target ? "your" : "&a" + target.getName() + "&7's") + " time. " +
-                    (actor.sender() == target ? "Your" : "Their") + " total time is now &a" + TimeUtil.timeToMessage(total) + "&7.");
+                    (actor.sender() == target ? "Your" : "Their") + " total time is now &a" + timeToMessage(total) + "&7.");
         });
     }
 
     @VRNCommand(cmd = "timeplayed subtract", desc = "Subtracts from the time that a player has been on the server.")
-    public CompletableFuture<Void> onTimePlayedSubtract(BukkitCommandActor actor, String time, @Default("@s") OfflinePlayer target) {
-        long totalsec;
+    public void onTimePlayedSubtract(BukkitCommandActor actor, String time, @Default("@s") OfflinePlayer target) {
+        long totalsec = 0;
         try {
             totalsec = TimeUtil.parseTimeString(time);
         } catch (final TimeUtil.TimeFormatException e) {
-            return CompletableFuture.runAsync(() -> actor.error(e.getMessage()));
+            CompletableFuture.runAsync(() -> actor.error(e.getMessage()));
         }
-        return VRNCore.getPlayerData(target.getUniqueId()).thenAcceptAsync(data -> {
-            long finalTotalSec = totalsec;
+        long finalTotalsec = totalsec;
+        VRNCore.getPlayerData(target.getUniqueId()).thenAcceptAsync(data -> {
+            long finalTotalSec = finalTotalsec;
             long timeplayed = data.getTimePlayed();
             if (finalTotalSec > timeplayed) {
                 finalTotalSec = timeplayed;
             }
             long total = timeplayed - finalTotalSec;
             data.setTimePlayed(total);
-            String timeString = TimeUtil.timeToMessage(total);
+            String timeString = timeToMessage(total);
             if (total < 1) {
                 timeString = "0 seconds";
             }
-            actor.reply("Subtracted &a" + TimeUtil.timeToMessage(finalTotalSec) + "&7 from " +
+            actor.reply("Subtracted &a" + timeToMessage(finalTotalSec) + "&7 from " +
                     (actor.sender() == target ? "your" : "&a" + target.getName() + "&7's") + " time. " +
                     (actor.sender() == target ? "Your" : "Their") + " total time is now &a" + timeString + "&7.");
         });
@@ -186,8 +188,8 @@ public class AdminCommands {
     }
 
     @VRNCommand(cmd = "god", desc = "Makes a player invulnerable.")
-    public CompletableFuture<Void> onGod(BukkitCommandActor actor, @Default("@s") OfflinePlayer target) {
-        return VRNCore.getPlayerData(target.getUniqueId()).thenAcceptAsync(data -> {
+    public void onGod(BukkitCommandActor actor, @Default("@s") OfflinePlayer target) {
+        VRNCore.getPlayerData(target.getUniqueId()).thenAcceptAsync(data -> {
             PlayerStates states = data.getStates();
             states.setGodmode(!states.hasGodmode());
             if (target.getPlayer() != null) {
@@ -195,7 +197,7 @@ public class AdminCommands {
             }
             if (target == actor.sender()) return;
             actor.reply("&a" + target.getName() + " &7is " + (states.hasGodmode() ? "now" : "no longer") + " invulnerable.");
-        }, Task::syncDelayed);
+        });
     }
 
     @VRNCommand(cmd = "repair", desc = "Repairs items in a player's inventory.")
